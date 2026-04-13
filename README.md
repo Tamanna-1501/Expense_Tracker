@@ -19,11 +19,6 @@ A complete personal finance tracker built with React + Vite + React Router. Feat
 ---
 
 ## Quick Start
-
-```bash
-# 1. Unzip and enter
-unzip expense-tracker-complete.zip && cd expense-app
-
 # 2. Install
 npm install
 
