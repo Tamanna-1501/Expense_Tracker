@@ -37,7 +37,7 @@ Open **http://localhost:5173**
 
 ## Demo Account
 
-> **Email:** rahul@example.com  
+> **Email:** User@example.com  
 > **Password:** demo1234
 
 Or click "Try demo account" on the login page.
