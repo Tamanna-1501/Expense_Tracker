@@ -1,0 +1,143 @@
+import { createContext, useContext, useState, useEffect } from 'react'
+
+const BudgetContext = createContext()
+
+function currentMonth() {
+  return new Date().toISOString().slice(0, 7)
+}
+
+export function BudgetProvider({ children }) {
+  const [budgets, setBudgets] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('budgets') || '{}') }
+    catch { return {} }
+  })
+
+  const [firedAlerts, setFiredAlerts] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('budgetAlerts') || '{}') }
+    catch { return {} }
+  })
+
+  const [toasts, setToasts]       = useState([])
+  const [emailModal, setEmailModal] = useState(null) 
+  useEffect(() => {
+    localStorage.setItem('budgets', JSON.stringify(budgets))
+  }, [budgets])
+
+  useEffect(() => {
+    localStorage.setItem('budgetAlerts', JSON.stringify(firedAlerts))
+  }, [firedAlerts])
+
+  function setBudget(cat, amount) {
+    setBudgets(prev => ({ ...prev, [cat]: Number(amount) }))
+  }
+
+  function removeBudget(cat) {
+    setBudgets(prev => {
+      const next = { ...prev }
+      delete next[cat]
+      return next
+    })
+  }
+
+  
+  function playAlert(type) {
+    try {
+      const ctx  = new (window.AudioContext || window.webkitAudioContext)()
+      const osc  = ctx.createOscillator()
+      const gain = ctx.createGain()
+      osc.connect(gain)
+      gain.connect(ctx.destination)
+      osc.frequency.value = type === 'danger' ? 880 : 660
+      osc.type = 'sine'
+      gain.gain.setValueAtTime(0.3, ctx.currentTime)
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1)
+      osc.start(ctx.currentTime)
+      osc.stop(ctx.currentTime + 1)
+    } catch(e) {}
+  }
+
+  
+  function pushNotification(title, message) {
+    if (Notification.permission === 'granted') {
+      new Notification(title, { body: message, icon: '/favicon.ico' })
+    } else if (Notification.permission !== 'denied') {
+      Notification.requestPermission().then(p => {
+        if (p === 'granted')
+          new Notification(title, { body: message, icon: '/favicon.ico' })
+      })
+    }
+  }
+
+  
+  function sendEmailModal(cat, spent, budget, pct) {
+    const userEmail = localStorage.getItem('userEmail') || 'user@example.com'
+    const userName  = localStorage.getItem('userName')  || 'User'
+    const isOver    = pct >= 100
+
+    setEmailModal({
+      to:         userEmail,
+      toName:     userName,
+      subject:    isOver
+                    ? `🚨 Budget Exceeded — ${cat}`
+                    : `⚠️ Budget Alert — ${cat}`,
+      category:   cat,
+      spent:      `₹${spent.toLocaleString('en-IN')}`,
+      budget:     `₹${budget.toLocaleString('en-IN')}`,
+      percentage: pct.toFixed(0),
+      remaining:  `₹${Math.max(0, budget - spent).toLocaleString('en-IN')}`,
+      overspent:  isOver ? `₹${(spent - budget).toLocaleString('en-IN')}` : null,
+      isOver,
+      sentAt:     new Date().toLocaleString('en-IN', {
+                    day: '2-digit', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  }),
+    })
+  }
+
+  function addToast(message, type = 'info') {
+    const id = Date.now()
+    playAlert(type)
+    pushNotification(
+      type === 'danger' ? '🚨 Budget Exceeded!' : '⚠️ Budget Warning',
+      message
+    )
+    setToasts(prev => [...prev, { id, message, type }])
+    setTimeout(() => removeToast(id), 6000)
+  }
+
+  function removeToast(id) {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }
+
+  function checkAlerts(cat, spent, budget) {
+    if (!budget || budget <= 0) return
+    const pct    = (spent / budget) * 100
+    const month  = currentMonth()
+    const key80  = `${month}_${cat}_80`
+    const key100 = `${month}_${cat}_100`
+
+    if (pct >= 100 && !firedAlerts[key100]) {
+      addToast(`🚨 ${cat} budget exceeded! Spent ₹${spent.toLocaleString()} of ₹${budget.toLocaleString()}`, 'danger')
+      sendEmailModal(cat, spent, budget, pct)
+      setFiredAlerts(prev => ({ ...prev, [key100]: true }))
+    } else if (pct >= 80 && pct < 100 && !firedAlerts[key80]) {
+      addToast(`⚠️ ${cat} at ${pct.toFixed(0)}% — only ₹${(budget - spent).toLocaleString()} left`, 'warning')
+      sendEmailModal(cat, spent, budget, pct)
+      setFiredAlerts(prev => ({ ...prev, [key80]: true }))
+    }
+  }
+
+  return (
+    <BudgetContext.Provider value={{
+      budgets, setBudget, removeBudget,
+      checkAlerts, toasts, removeToast,
+      emailModal, setEmailModal,
+    }}>
+      {children}
+    </BudgetContext.Provider>
+  )
+}
+
+export function useBudget() {
+  return useContext(BudgetContext)
+}
