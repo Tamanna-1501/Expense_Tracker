@@ -1,92 +1,188 @@
-# PaiseTrack — Expense Tracker
+# 💰 Expense Tracker AI
 
-A complete personal finance tracker built with React + Vite + React Router. Features authentication, full CRUD for transactions, category breakdown, charts, and settings — all persisted in `localStorage`.
-
----
-
-## Pages
-
-| Route | Page | Auth |
-|-------|------|------|
-| `/login` | Login | Public |
-| `/register` | Register | Public |
-| `/home` | Dashboard | Protected |
-| `/transactions` | Full transaction list | Protected |
-| `/add` | Add income/expense | Protected |
-| `/categories` | Spending breakdown | Protected |
-| `/settings` | Profile & logout | Protected |
+A modern full-stack Expense Tracker application that helps users manage daily expenses, budgets, group spending, and gain insights using an AI-powered chatbot.
 
 ---
 
-## Quick Start
-# 2. Install
+## 🚀 Features
+
+### 🔐 Authentication
+
+* User registration and login system
+* Secure authentication using tokens
+* Protected routes for authorized users
+
+---
+
+### 💸 Transactions Management
+
+* Add new transactions (income/expense)
+* Categorize transactions
+* View and manage transaction history
+* Real-time updates
+
+---
+
+### 📊 Analytics Dashboard
+
+* Visual representation of expenses
+* Track spending patterns
+* Category-based analysis
+
+---
+
+### 🎯 Budget Management
+
+* Set and manage budgets
+* Track spending against budget limits
+* Helps in financial planning
+
+---
+
+### 👥 Group Expense Feature
+
+* Create groups
+* Add members to groups
+* Split expenses among members
+* Track balances within groups
+
+---
+
+### 🤖 AI Chatbot (FinBot)
+
+* Ask financial questions
+* Get smart suggestions
+* Improve spending habits
+
+---
+
+### ⚙️ Settings
+
+* Manage user preferences
+* Customize app experience
+
+---
+
+## 🛠️ Tech Stack
+
+### Frontend
+
+* React.js
+* React Router DOM
+* Context API (Auth, Transactions, Budget, Groups)
+* CSS Modules
+
+### Backend
+
+* FastAPI (Python)
+
+---
+
+## 📁 Project Structure
+
+```id="8j3q2v"
+src/
+│
+├── components/
+│   ├── BottomNav.jsx
+│   └── ProtectedRoute.jsx
+│
+├── context/
+│   ├── AuthContext.jsx
+│   ├── TxContext.jsx
+│   ├── BudgetContext.jsx
+│   └── GroupContext.jsx
+│
+├── pages/
+│   ├── HomePage.jsx
+│   ├── TransactionsPage.jsx
+│   ├── AddTransactionPage.jsx
+│   ├── CategoriesPage.jsx
+│   ├── AnalyticsPage.jsx
+│   ├── BudgetPage.jsx
+│   ├── GroupsPage.jsx
+│   ├── ChatbotPage.jsx
+│   ├── SettingsPage.jsx
+│   ├── LandingPage.jsx
+│   ├── LoginPage.jsx
+│   └── RegisterPage.jsx
+│
+├── App.jsx
+├── main.jsx
+├── index.css
+└── constants.js
+```
+
+---
+
+## ⚙️ Installation & Setup
+
+### 1️⃣ Clone Repository
+
+```id="3y9gkl"
+git clone https://github.com/singhjesika/Expense-Tracker-AI.git
+cd Expense-Tracker-AI
+```
+
+---
+
+### 2️⃣ Install Dependencies
+
+```id="7f5x0m"
 npm install
+```
 
-# 3. Run dev server
+---
+
+### 3️⃣ Run Frontend
+
+```id="b7kp7s"
 npm run dev
 ```
 
-Open **http://localhost:5173**
-
 ---
 
-## Demo Account
+### 4️⃣ Run Backend (if using FastAPI)
 
-> **Email:** User@example.com  
-> **Password:** demo1234
-
-Or click "Try demo account" on the login page.
-
----
-
-## Project Structure
-
-```
-src/
-├── context/
-│   ├── AuthContext.jsx       # Login, register, logout (localStorage)
-│   └── TxContext.jsx         # Transaction state + derived data
-├── components/
-│   ├── BottomNav.jsx         # App navigation bar
-│   └── ProtectedRoute.jsx    # Auth guard
-├── pages/
-│   ├── LoginPage.jsx
-│   ├── RegisterPage.jsx
-│   ├── AuthPage.module.css
-│   ├── HomePage.jsx          # Dashboard
-│   ├── HomePage.module.css
-│   ├── TransactionsPage.jsx  # Filterable list + delete
-│   ├── TransactionsPage.module.css
-│   ├── AddTransactionPage.jsx
-│   ├── AddTransactionPage.module.css
-│   ├── CategoriesPage.jsx    # Donut chart + breakdown
-│   ├── CategoriesPage.module.css
-│   ├── SettingsPage.jsx      # Profile, preferences, logout
-│   └── SettingsPage.module.css
-├── constants.js              # Categories, icons, formatters, seed data
-├── index.css                 # Global tokens + animations
-├── App.jsx                   # Router + providers
-└── main.jsx
+```id="8bz6pv"
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
 ---
 
-## Features
+## 🌐 Usage
 
-- **Auth** — Register, login, logout with localStorage persistence. Each user has their own transaction data.
-- **Dashboard** — Balance hero, stats, monthly bar chart, recent transactions, top categories
-- **Transactions** — Full list grouped by date, search, type filter, delete with confirmation
-- **Add Transaction** — Big amount input, category picker with icons, note field
-- **Categories** — SVG donut chart + sorted breakdown with percentages
-- **Settings** — Profile info, preferences, data management, sign out
-- **Dark mode ready** — CSS variables used throughout (add `prefers-color-scheme: dark` overrides to `index.css`)
+* Open: http://localhost:5173
+* Register/Login
+* Add and track expenses
+* Manage budgets
+* Create groups and split expenses
+* Use AI chatbot for financial help
 
 ---
 
-## Tech Stack
 
-- React 18
-- React Router v6
-- Vite 5
-- CSS Modules
-- localStorage (no backend required)
+---
+
+## 🔮 Future Improvements
+
+* Mobile responsive improvements
+* Export reports (PDF/Excel)
+* Advanced AI insights
+* Notifications for budget limits
+
+---
+
+
+
+
+
+
+
+
+
+
+
+
+
