@@ -7,7 +7,6 @@ import { fmt, CAT_ICONS } from '../constants'
 import styles from './ChatbotPage.module.css'
 
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_KEY
-
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
 
 const SUGGESTIONS = [
@@ -17,6 +16,9 @@ const SUGGESTIONS = [
   'Am I spending too much on food?',
   'What is the 50/30/20 rule for me?',
   'Should I build an emergency fund?',
+  'How can I increase my income?',
+  'Which category am I overspending on?',
+
 ]
 
 function buildSystemPrompt(user, transactions, totalIncome, totalExpense, balance, categoryTotals) {
@@ -43,13 +45,16 @@ User's financial snapshot:
 - Recent transactions: ${recentTx || 'None yet'}
 
 Your role:
-1. Give personalized investment & savings advice based on the user's ACTUAL financial data above.
-2. Suggest Indian-specific investment options: PPF, ELSS, SIP/Mutual Funds, FD, NPS, Sovereign Gold Bonds, Index Funds (Nifty 50), etc.
-3. Reference their real numbers (income, expenses, categories) when making suggestions.
-4. Keep responses concise, warm, and practical — use bullet points and ₹ amounts where helpful.
-5. If asked something unrelated to finance, gently redirect to financial topics.
-6. Always add a brief disclaimer that you're an AI and not a SEBI-registered advisor.
-7. Use emojis sparingly to make responses friendly.`
+1. If total income is 0, first tell the user to add income transactions before giving savings or investment advice.
+2. Give personalized investment & savings advice based on the user's ACTUAL financial data above.
+3. Suggest Indian-specific investment options: PPF, ELSS, SIP/Mutual Funds, FD, NPS, Sovereign Gold Bonds, Index Funds (Nifty 50), etc.
+4. Reference their real numbers (income, expenses, categories) when making suggestions.
+5. Keep responses concise, warm, and practical — use bullet points and ₹ amounts where helpful.
+6. Highlight actionable steps (what to do next) instead of only giving general advice.
+7. If asked something unrelated to finance, gently redirect to financial topics.
+8. Always add a brief disclaimer that you're an AI and not a SEBI-registered advisor.
+9. Use emojis sparingly to make responses friendly.
+10. Avoid overly generic advice — tailor every response to the user data.`
 }
 
 export default function ChatbotPage() {
@@ -76,6 +81,15 @@ export default function ChatbotPage() {
     const userText = text || input.trim()
     if (!userText || loading) return
     setInput('')
+
+    if (!GROQ_API_KEY) {
+      setMessages(prev => [
+        ...prev,
+        { role: 'user', content: userText },
+        { role: 'assistant', content: '⚠️ FinBot requires API key. Please add it in .env file.' },
+      ])
+      return
+    }
 
     const newMessages = [...messages, { role: 'user', content: userText }]
     setMessages(newMessages)
@@ -112,7 +126,7 @@ export default function ChatbotPage() {
         'Sorry, I could not generate a response.'
 
       setMessages(prev => [...prev, { role: 'assistant', content: reply }])
-    } catch (err) {
+    } catch {
       setMessages(prev => [
         ...prev,
         { role: 'assistant', content: '⚠️ Something went wrong. Please try again.' },
@@ -155,7 +169,6 @@ export default function ChatbotPage() {
     <div className="page-shell">
       <div className={styles.chatShell}>
 
-        {/* Header */}
         <header className={styles.header}>
           <button className={styles.back} onClick={() => navigate('/home')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -175,7 +188,6 @@ export default function ChatbotPage() {
           <div className={styles.headerBadge}>BETA</div>
         </header>
 
-        {/* Financial snapshot pill */}
         <div className={styles.snapshotBar}>
           <div className={styles.snapshotItem}>
             <span className={styles.snapLabel}>Balance</span>
@@ -193,7 +205,6 @@ export default function ChatbotPage() {
           </div>
         </div>
 
-        {/* Messages */}
         <div className={styles.messages}>
           {messages.map((m, i) => (
             <div key={i} className={`${styles.msgRow} ${m.role === 'user' ? styles.userRow : styles.botRow}`}>
@@ -215,7 +226,6 @@ export default function ChatbotPage() {
           <div ref={bottomRef} />
         </div>
 
-        {/* Suggestions */}
         {messages.length <= 1 && (
           <div className={styles.suggestions}>
             {SUGGESTIONS.map(s => (
@@ -226,7 +236,6 @@ export default function ChatbotPage() {
           </div>
         )}
 
-        {/* Input */}
         <div className={styles.inputArea}>
           <input
             ref={inputRef}

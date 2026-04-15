@@ -1,119 +1,195 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useCallback } from 'react'
 
-const GroupContext = createContext()
+const GroupContext = createContext(null)
+
+const COLORS = [
+  '#1D9E75',
+  '#D85A30',
+  '#6366F1',
+  '#F59E0B',
+  '#EC4899',
+  '#14B8A6',
+  '#8B5CF6',
+  '#3B82F6'
+]
 
 export function GroupProvider({ children }) {
-  const [groups, setGroups] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('splitGroups') || '[]') }
-    catch { return [] }
-  })
+  const [groups, setGroups] = useState([])
 
-  useEffect(() => {
-    localStorage.setItem('splitGroups', JSON.stringify(groups))
-  }, [groups])
-
-  // Create a new group
   function createGroup(name, emoji, members) {
-    const newGroup = {
-      id:       Date.now(),
-      name,
-      emoji,
-      members,  
-      expenses: [],
-      createdAt: new Date().toISOString().slice(0, 10),
-    }
-    setGroups(prev => [newGroup, ...prev])
-    return newGroup.id
+    const id = Date.now()
+
+    setGroups(prev => [
+      ...prev,
+      {
+        id,
+        name,
+        emoji,
+        members,
+        expenses: [],
+        colors: members.reduce((acc, m, i) => {
+          acc[m] = COLORS[i % COLORS.length]
+          return acc
+        }, {}),
+        createdAt: new Date().toLocaleDateString('en-IN', {
+          day: '2-digit',
+          month: 'short',
+          year: 'numeric'
+        })
+      }
+    ])
+
+    return id
   }
 
-  
-  function addExpense(groupId, expense) {
-    // expense = { id, desc, amount, paidBy, splitAmong, date, cat }
-    setGroups(prev => prev.map(g =>
-      g.id === groupId
-        ? { ...g, expenses: [{ ...expense, id: Date.now() }, ...g.expenses] }
-        : g
-    ))
-  }
-
-  // Delete expense from a group
-  function deleteExpense(groupId, expenseId) {
-    setGroups(prev => prev.map(g =>
-      g.id === groupId
-        ? { ...g, expenses: g.expenses.filter(e => e.id !== expenseId) }
-        : g
-    ))
-  }
-
-  
   function deleteGroup(groupId) {
     setGroups(prev => prev.filter(g => g.id !== groupId))
   }
 
-  // Settle up — mark a debt as paid
-  function settleDebt(groupId, from, to) {
-    setGroups(prev => prev.map(g => {
-      if (g.id !== groupId) return g
-      const settle = { id: Date.now(), desc: 'Settlement', amount: 0, paidBy: from, splitAmong: [from, to], date: new Date().toISOString().slice(0,10), isSettlement: true, settleFrom: from, settleTo: to }
-      return { ...g, expenses: [settle, ...g.expenses] }
-    }))
+  function addExpense(groupId, exp) {
+    setGroups(prev =>
+      prev.map(g =>
+        g.id !== groupId
+          ? g
+          : {
+              ...g,
+              expenses: [
+                ...g.expenses,
+                {
+                  ...exp,
+                  id: Date.now(),
+                  isSettlement: false
+                }
+              ]
+            }
+      )
+    )
   }
 
- 
-  function calcBalances(group) {
-    
-    const net = {}
-    group.members.forEach(m => net[m] = 0)
+  function deleteExpense(groupId, expId) {
+    setGroups(prev =>
+      prev.map(g =>
+        g.id !== groupId
+          ? g
+          : {
+              ...g,
+              expenses: g.expenses.filter(e => e.id !== expId)
+            }
+      )
+    )
+  }
 
-    group.expenses.forEach(exp => {
-      if (exp.isSettlement) {
-        // settlement clears debt from -> to
-        net[exp.settleFrom] += exp.settleAmount || 0
-        net[exp.settleTo]   -= exp.settleAmount || 0
-        return
-      }
-      const share = exp.amount / exp.splitAmong.length
-      
-      net[exp.paidBy] = (net[exp.paidBy] || 0) + exp.amount
-      
-      exp.splitAmong.forEach(m => {
-        net[m] = (net[m] || 0) - share
-      })
+  function settleDebt(groupId, from, to, amount) {
+    setGroups(prev =>
+      prev.map(g =>
+        g.id !== groupId
+          ? g
+          : {
+              ...g,
+              expenses: [
+                ...g.expenses,
+                {
+                  id: Date.now(),
+                  desc: `${from} paid ${to}`,
+                  amount,
+                  paidBy: from,
+                  splitAmong: [to],
+                  cat: 'Settlement',
+                  date: new Date().toISOString().slice(0, 10),
+                  isSettlement: true
+                }
+              ]
+            }
+      )
+    )
+  }
+
+  const calcBalances = useCallback(group => {
+    const net = {}
+
+    group.members.forEach(m => {
+      net[m] = 0
     })
 
-    
-    const debts = []
-    const pos = Object.entries(net).filter(([,v]) => v > 0.01).sort((a,b) => b[1]-a[1])
-    const neg = Object.entries(net).filter(([,v]) => v < -0.01).sort((a,b) => a[1]-b[1])
+    group.expenses.forEach(exp => {
+      const { paidBy, amount, splitAmong = [], splitMode, customSplit } = exp
 
-    let i = 0, j = 0
-    const p = pos.map(([k,v]) => ({ name:k, amt:v }))
-    const n = neg.map(([k,v]) => ({ name:k, amt:-v }))
+      if (!paidBy || !amount || splitAmong.length === 0) return
 
-    while (i < p.length && j < n.length) {
-      const settle = Math.min(p[i].amt, n[j].amt)
-      if (settle > 0.01) {
-        debts.push({ from: n[j].name, to: p[i].name, amount: Math.round(settle) })
+      if (splitMode === 'custom' && customSplit) {
+        splitAmong.forEach(m => {
+          const share = Number(customSplit?.[m] || 0)
+          if (m !== paidBy) {
+            net[paidBy] += share
+            net[m] -= share
+          }
+        })
+      } else {
+        const perPerson = amount / splitAmong.length
+
+        splitAmong.forEach(m => {
+          if (m !== paidBy) {
+            net[paidBy] += perPerson
+            net[m] -= perPerson
+          }
+        })
       }
-      p[i].amt -= settle
-      n[j].amt -= settle
-      if (p[i].amt < 0.01) i++
-      if (n[j].amt < 0.01) j++
+    })
+
+    const creditors = []
+    const debtors = []
+
+    Object.entries(net).forEach(([name, val]) => {
+      if (val > 0.01) creditors.push({ name, amount: val })
+      else if (val < -0.01) debtors.push({ name, amount: -val })
+    })
+
+    const balances = []
+    let i = 0
+    let j = 0
+
+    while (i < debtors.length && j < creditors.length) {
+      const d = debtors[i]
+      const c = creditors[j]
+
+      const settled = Math.min(d.amount, c.amount)
+
+      balances.push({
+        from: d.name,
+        to: c.name,
+        amount: Math.round(settled)
+      })
+
+      d.amount -= settled
+      c.amount -= settled
+
+      if (d.amount < 0.01) i++
+      if (c.amount < 0.01) j++
     }
 
-    return debts
-  }
+    return balances
+  }, [])
 
   return (
-    <GroupContext.Provider value={{
-      groups, createGroup, addExpense,
-      deleteExpense, deleteGroup, settleDebt, calcBalances,
-    }}>
+    <GroupContext.Provider
+      value={{
+        groups,
+        createGroup,
+        deleteGroup,
+        addExpense,
+        deleteExpense,
+        settleDebt,
+        calcBalances,
+        COLORS
+      }}
+    >
       {children}
     </GroupContext.Provider>
   )
 }
 
 export function useGroup() {
-  return useContext(GroupContext)
+  const ctx = useContext(GroupContext)
+  if (!ctx) throw new Error('useGroup must be used inside GroupProvider')
+  return ctx
 }

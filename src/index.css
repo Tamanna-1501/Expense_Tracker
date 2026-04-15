@@ -1,6 +1,10 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap');
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 :root {
   --font-display: 'Playfair Display', Georgia, serif;
@@ -10,6 +14,10 @@
   --ink2:    #52525B;
   --ink3:    #A1A1AA;
   --ink4:    #D4D4D8;
+
+  --text: var(--ink);
+  --text2: var(--ink2);
+  --text3: var(--ink3);
 
   --bg:      #F4F2EE;
   --surface: #FFFFFF;
@@ -37,42 +45,97 @@
   --nav: 64px;
 }
 
-html, body { height: 100%; }
+.dark {
+  --ink:     #FFFFFF;
+  --ink2:    #E2E8F0;
+  --ink3:    #94A3B8;
+  --ink4:    #64748B;
+
+  --text: var(--ink);
+  --text2: var(--ink2);
+  --text3: var(--ink3);
+
+  --bg:      #020617;
+  --surface: #0F172A;
+  --surface2:#1E293B;
+  --surface3:#334155;
+
+  --teal:    #22C55E;
+  --teal-l:  #052E1B;
+  --teal-d:  #16A34A;
+
+  --coral:   #F87171;
+  --coral-l: #3F1D1D;
+  --coral-d: #EF4444;
+
+  --amber:   #FACC15;
+  --amber-l: #422006;
+  --amber-d: #EAB308;
+
+  --border:  rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
 
 body {
   font-family: var(--font-body);
-  background: var(--bg);
-  color: var(--ink);
   -webkit-font-smoothing: antialiased;
 }
 
 #root { height: 100%; }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+/* FIX: All text visible in dark mode */
+h1, h2, h3, h4, h5, h6,
+p, span, li, div {
+  color: var(--text);
+}
 
-/* Animations */
+/* FIX: charts text */
+svg text {
+  fill: var(--text);
+}
+
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border2);
+  border-radius: 2px;
+}
+
+/* animations */
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(14px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
+
 @keyframes slideIn {
   from { opacity: 0; transform: translateX(16px); }
   to   { opacity: 1; transform: translateX(0); }
 }
+
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.95); }
   to   { opacity: 1; transform: scale(1); }
 }
 
-.anim-fade-up  { animation: fadeUp  0.40s ease both; }
-.anim-fade-in  { animation: fadeIn  0.30s ease both; }
+.anim-fade-up  { animation: fadeUp 0.40s ease both; }
+.anim-fade-in  { animation: fadeIn 0.30s ease both; }
 .anim-slide-in { animation: slideIn 0.35s ease both; }
 .anim-scale-in { animation: scaleIn 0.30s ease both; }
 
@@ -84,7 +147,6 @@ body {
 .d6 { animation-delay: 0.30s; }
 .d7 { animation-delay: 0.35s; }
 
-/* Shared layout */
 .page-shell {
   display: flex;
   flex-direction: column;
@@ -99,7 +161,6 @@ body {
   padding: 1.5rem 1.25rem calc(var(--nav) + 2rem);
 }
 
-/* Bottom Nav */
 .bottom-nav {
   position: fixed;
   bottom: 0; left: 0; right: 0;
@@ -123,7 +184,7 @@ body {
   border-radius: var(--r);
   transition: background 0.15s;
   text-decoration: none;
-  color: var(--ink3);
+  color: var(--text3);
 }
 
 .nav-item:hover { background: var(--surface2); }
@@ -132,9 +193,12 @@ body {
 
 .nav-item svg { width: 22px; height: 22px; }
 
-.nav-label { font-size: 10px; font-weight: 500; letter-spacing: 0.04em; }
+.nav-label {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
 
-/* Cards */
 .card {
   background: var(--surface);
   border: 0.5px solid var(--border);
@@ -146,13 +210,12 @@ body {
 .card-title {
   font-size: 11px;
   font-weight: 600;
-  color: var(--ink3);
+  color: var(--text3);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   margin-bottom: 1rem;
 }
 
-/* Buttons */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -177,25 +240,18 @@ body {
   width: 100%;
 }
 
-.btn-primary:hover { opacity: 0.85; }
-
 .btn-teal {
   background: var(--teal);
   color: #fff;
   width: 100%;
 }
 
-.btn-teal:hover { opacity: 0.88; }
-
 .btn-ghost {
   background: transparent;
   border: 0.5px solid var(--border2);
-  color: var(--ink2);
+  color: var(--text2);
 }
 
-.btn-ghost:hover { background: var(--surface2); }
-
-/* Form */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -206,7 +262,7 @@ body {
 .form-group label {
   font-size: 12px;
   font-weight: 500;
-  color: var(--ink2);
+  color: var(--text2);
 }
 
 .form-group input,
@@ -217,18 +273,10 @@ body {
   border: 0.5px solid var(--border2);
   border-radius: var(--r);
   background: var(--surface);
-  color: var(--ink);
+  color: var(--text);
   font-family: var(--font-body);
   font-size: 15px;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.form-group input:focus,
-.form-group select:focus,
-.form-group textarea:focus {
-  border-color: var(--teal);
-  box-shadow: 0 0 0 3px rgba(29,158,117,0.10);
 }
 
 .form-group textarea {
@@ -240,41 +288,10 @@ body {
 .form-error {
   font-size: 12px;
   color: var(--coral);
-  margin-top: -10px;
-  margin-bottom: 8px;
 }
 
-/* Chips */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 14px;
-  font-size: 12px;
-  font-weight: 500;
-  cursor: pointer;
-  border: 0.5px solid var(--border2);
-  background: transparent;
-  color: var(--ink2);
-  transition: all 0.15s;
-  font-family: var(--font-body);
-}
-
-.chip.active-all      { background: var(--ink); color: var(--surface); border-color: var(--ink); }
-.chip.active-income   { background: var(--teal-l); color: var(--teal-d); border-color: rgba(29,158,117,0.25); }
-.chip.active-expense  { background: var(--coral-l); color: var(--coral-d); border-color: rgba(216,90,48,0.25); }
-
-/* Amount display */
-.amt-income  { color: var(--teal); }
-.amt-expense { color: var(--coral); }
-
-/* Empty state */
 .empty-state {
   text-align: center;
   padding: 3rem 1rem;
-  color: var(--ink3);
+  color: var(--text3);
 }
-
-.empty-state p { font-size: 14px; margin-top: 8px; }
