@@ -1,6 +1,8 @@
-import { createContext, useContext, useState, useCallback } from 'react'
+import { createContext, useContext, useState, useCallback, useEffect } from 'react'
+import { useAuth } from './AuthContext'
 
 const GroupContext = createContext(null)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 const COLORS = [
   '#1D9E75',
@@ -14,95 +16,146 @@ const COLORS = [
 ]
 
 export function GroupProvider({ children }) {
+  const { token } = useAuth()
   const [groups, setGroups] = useState([])
+  const [loading, setLoading] = useState(false)
 
-  function createGroup(name, emoji, members) {
-    const id = Date.now()
-
-    setGroups(prev => [
-      ...prev,
-      {
-        id,
-        name,
-        emoji,
-        members,
-        expenses: [],
-        colors: members.reduce((acc, m, i) => {
-          acc[m] = COLORS[i % COLORS.length]
-          return acc
-        }, {}),
-        createdAt: new Date().toLocaleDateString('en-IN', {
-          day: '2-digit',
-          month: 'short',
-          year: 'numeric'
+  // Fetch groups from API
+  useEffect(() => {
+    if (!token) { setGroups([]); return }
+    
+    const fetchGroups = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch(`${API_URL}/groups`, {
+          headers: { 'Authorization': `Bearer ${token}` }
         })
+        if (!res.ok) throw new Error('Failed to fetch')
+        const data = await res.json()
+        const groups = (data.groups || []).map(g => ({ ...g, id: g._id }))
+        setGroups(groups)
+      } catch (err) {
+        console.error('Error fetching groups:', err)
+      } finally {
+        setLoading(false)
       }
-    ])
+    }
+    
+    fetchGroups()
+  }, [token])
 
-    return id
-  }
+  const createGroup = useCallback(async (name, emoji, members) => {
+    if (!token) return null
+    try {
+      const res = await fetch(`${API_URL}/groups`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name, emoji, members })
+      })
+      if (!res.ok) throw new Error('Failed to create')
+      const group = { ...data.group, id: data.group._id }
+      setGroups(prev => [...prev, group])
+      return data.group._id
+    } catch (err) {
+      console.error('Error creating group:', err)
+      return null
+    }
+  }, [token])
 
-  function deleteGroup(groupId) {
-    setGroups(prev => prev.filter(g => g.id !== groupId))
-  }
+  const deleteGroup = useCallback(async (groupId) => {
+    if (!token) return
+    try {
+      const res = await fetch(`${API_URL}/groups/${groupId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Failed to delete')
+      setGroups(prev => prev.filter(g => g._id !== groupId))
+    } catch (err) {
+      console.error('Error deleting group:', err)
+    }
+  }, [token])
 
-  function addExpense(groupId, exp) {
-    setGroups(prev =>
-      prev.map(g =>
-        g.id !== groupId
-          ? g
-          : {
-              ...g,
-              expenses: [
-                ...g.expenses,
-                {
-                  ...exp,
-                  id: Date.now(),
-                  isSettlement: false
-                }
-              ]
-            }
-      )
-    )
-  }
+  const addExpense = useCallback(async (groupId, exp) => {
+    if (!token) return
+    try {
+      const res = await fetch(`${API_URL}/groups/${groupId}/expenses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          desc: exp.desc,
+          amount: exp.amount,
+          paidBy: exp.paidBy,
+          splitAmong: exp.splitAmong,
+          cat: exp.cat,
+          date: exp.date
+        })
+      })
+      if (!res.ok) throw new Error('Failed to add expense')
+      const data = await res.json()
+      setGroups(prev => prev.map(g =>
+        g._id === groupId
+          ? { ...g, expenses: [...(g.expenses || []), data.expense] }
+          : g
+      ))
+    } catch (err) {
+      console.error('Error adding expense:', err)
+    }
+  }, [token])
 
-  function deleteExpense(groupId, expId) {
-    setGroups(prev =>
-      prev.map(g =>
-        g.id !== groupId
-          ? g
-          : {
-              ...g,
-              expenses: g.expenses.filter(e => e.id !== expId)
-            }
-      )
-    )
-  }
+  const deleteExpense = useCallback(async (groupId, expId) => {
+    if (!token) return
+    try {
+      const res = await fetch(`${API_URL}/groups/${groupId}/expenses/${expId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      if (!res.ok) throw new Error('Failed to delete')
+      setGroups(prev => prev.map(g =>
+        g._id === groupId
+          ? { ...g, expenses: g.expenses.filter(e => e.id !== expId) }
+          : g
+      ))
+    } catch (err) {
+      console.error('Error deleting expense:', err)
+    }
+  }, [token])
 
-  function settleDebt(groupId, from, to, amount) {
-    setGroups(prev =>
-      prev.map(g =>
-        g.id !== groupId
-          ? g
-          : {
-              ...g,
-              expenses: [
-                ...g.expenses,
-                {
-                  id: Date.now(),
-                  desc: `${from} paid ${to}`,
-                  amount,
-                  paidBy: from,
-                  splitAmong: [to],
-                  cat: 'Settlement',
-                  date: new Date().toISOString().slice(0, 10),
-                  isSettlement: true
-                }
-              ]
-            }
-      )
-    )
-  }
+  const settleDebt = useCallback(async (groupId, from, to, amount) => {
+    if (!token) return
+    try {
+      const res = await fetch(`${API_URL}/groups/${groupId}/expenses`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          desc: `${from} paid ${to}`,
+          amount,
+          paidBy: from,
+          splitAmong: [to],
+          cat: 'Settlement',
+          date: new Date().toISOString().slice(0, 10)
+        })
+      })
+      if (!res.ok) throw new Error('Failed to settle')
+      const data = await res.json()
+      setGroups(prev => prev.map(g =>
+        g._id === groupId
+          ? { ...g, expenses: [...(g.expenses || []), data.expense] }
+          : g
+      ))
+    } catch (err) {
+      console.error('Error settling debt:', err)
+    }
+  }, [token])
 
   const calcBalances = useCallback(group => {
     const net = {}
@@ -112,28 +165,18 @@ export function GroupProvider({ children }) {
     })
 
     group.expenses.forEach(exp => {
-      const { paidBy, amount, splitAmong = [], splitMode, customSplit } = exp
+      const { paidBy, amount, splitAmong = [] } = exp
 
       if (!paidBy || !amount || splitAmong.length === 0) return
 
-      if (splitMode === 'custom' && customSplit) {
-        splitAmong.forEach(m => {
-          const share = Number(customSplit?.[m] || 0)
-          if (m !== paidBy) {
-            net[paidBy] += share
-            net[m] -= share
-          }
-        })
-      } else {
-        const perPerson = amount / splitAmong.length
+      const perPerson = amount / splitAmong.length
 
-        splitAmong.forEach(m => {
-          if (m !== paidBy) {
-            net[paidBy] += perPerson
-            net[m] -= perPerson
-          }
-        })
-      }
+      splitAmong.forEach(m => {
+        if (m !== paidBy) {
+          net[paidBy] += perPerson
+          net[m] -= perPerson
+        }
+      })
     })
 
     const creditors = []
@@ -180,6 +223,7 @@ export function GroupProvider({ children }) {
         deleteExpense,
         settleDebt,
         calcBalances,
+        loading,
         COLORS
       }}
     >

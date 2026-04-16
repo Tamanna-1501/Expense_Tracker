@@ -1,55 +1,101 @@
-import { createContext, useContext, useState } from 'react'
+import { createContext, useContext, useState, useEffect } from 'react'
 
 const AuthContext = createContext(null)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
-const DEMO_USER = { name: 'Demo User', email: 'Demo@gmail.com', password: 'user1234', initials: 'DU' }
+function loadToken() {
+  try { return localStorage.getItem('pt_token') } catch { return null }
+}
 
-function loadUsers() {
-  try { return JSON.parse(localStorage.getItem('pt_users') || '[]') } catch { return [] }
+function saveToken(token) {
+  if (token) localStorage.setItem('pt_token', token)
+  else localStorage.removeItem('pt_token')
 }
-function saveUsers(u) { localStorage.setItem('pt_users', JSON.stringify(u)) }
-function loadSession() {
-  try { return JSON.parse(localStorage.getItem('pt_session') || 'null') } catch { return null }
+
+function loadUser() {
+  try { return JSON.parse(localStorage.getItem('pt_user') || 'null') } catch { return null }
 }
-function saveSession(u) { localStorage.setItem('pt_session', u ? JSON.stringify(u) : 'null') }
+
+function saveUser(user) {
+  if (user) localStorage.setItem('pt_user', JSON.stringify(user))
+  else localStorage.removeItem('pt_user')
+}
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(() => {
-    // Always upsert demo user so credential changes always take effect
-    const users = loadUsers()
-    const others = users.filter(u => u.email.toLowerCase() !== DEMO_USER.email.toLowerCase())
-    saveUsers([...others, DEMO_USER])
-    const s = loadSession()
-    return s || null
-  })
+  const [user, setUser] = useState(() => loadUser())
+  const [token, setToken] = useState(() => loadToken())
+  const [loading, setLoading] = useState(false)
 
-  function login(email, password) {
-    const users = loadUsers()
-    const found = users.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password)
-    if (!found) return 'Invalid email or password.'
-    const session = { name: found.name, email: found.email, initials: found.initials || found.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) }
-    setUser(session)
-    saveSession(session)
-    return null
+  useEffect(() => {
+    saveUser(user)
+  }, [user])
+
+  useEffect(() => {
+    saveToken(token)
+  }, [token])
+
+  async function login(email, password) {
+    try {
+      setLoading(true)
+      const res = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+      const data = await res.json()
+      
+      if (!res.ok) return data.message || 'Login failed'
+      
+      const userData = { 
+        name: data.user.name, 
+        email: data.user.email, 
+        id: data.user.id,
+        initials: data.user.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+      }
+      setUser(userData)
+      setToken(data.token)
+      return null
+    } catch (err) {
+      return 'Network error. Make sure backend is running.'
+    } finally {
+      setLoading(false)
+    }
   }
 
-  function register(name, email, password) {
-    const users = loadUsers()
-    if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) return 'Email already registered.'
-    const newUser = { name, email, password, initials: name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2) }
-    saveUsers([...users, newUser])
-    const session = { name: newUser.name, email: newUser.email, initials: newUser.initials }
-    setUser(session)
-    saveSession(session)
-    return null
+  async function register(name, email, password) {
+    try {
+      setLoading(true)
+      const res = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      })
+      const data = await res.json()
+      
+      if (!res.ok) return data.message || 'Registration failed'
+      
+      const userData = {
+        name: data.user.name,
+        email: data.user.email,
+        id: data.user.id,
+        initials: data.user.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)
+      }
+      setUser(userData)
+      setToken(data.token)
+      return null
+    } catch (err) {
+      return 'Network error. Make sure backend is running.'
+    } finally {
+      setLoading(false)
+    }
   }
 
   function logout() {
     setUser(null)
-    saveSession(null)
+    setToken(null)
   }
 
-  return <AuthContext.Provider value={{ user, login, register, logout }}>{children}</AuthContext.Provider>
+  return <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>{children}</AuthContext.Provider>
 }
 
 export function useAuth() { return useContext(AuthContext) }

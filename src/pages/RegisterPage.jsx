@@ -19,7 +19,7 @@ export default function RegisterPage() {
     if (form.password !== form.confirm) { setError('Passwords do not match.'); return }
     setLoading(true)
     await new Promise(r => setTimeout(r, 400))
-    const err = register(form.name, form.email, form.password)
+    const err = await register(form.name, form.email, form.password)
     setLoading(false)
     if (err) { setError(err); return }
     navigate('/home')

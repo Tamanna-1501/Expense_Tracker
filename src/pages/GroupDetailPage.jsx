@@ -32,7 +32,7 @@ export default function GroupDetailPage() {
   const navigate = useNavigate()
   const { groups, settleDebt, calcBalances } = useGroup()
 
-  const group = groups.find(g => g.id === Number(id))
+  const group = groups.find(g => g._id === id || g.id === id)
 
   const [tab, setTab] = useState(0)
 
@@ -81,7 +81,7 @@ export default function GroupDetailPage() {
     .reduce((s, b) => s + (b.amount || 0), 0)
 
   function handleSettle(from, to, amount) {
-    settleDebt(group.id, from, to, amount)
+    settleDebt(group._id || group.id, from, to, amount)
   }
 
   return (

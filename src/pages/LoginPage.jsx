@@ -17,7 +17,7 @@ export default function LoginPage() {
     if (!form.email || !form.password) { setError('Please fill in all fields.'); return }
     setLoading(true)
     await new Promise(r => setTimeout(r, 400))
-    const err = login(form.email, form.password)
+    const err = await login(form.email, form.password)
     setLoading(false)
     if (err) { setError(err); return }
     navigate('/home')

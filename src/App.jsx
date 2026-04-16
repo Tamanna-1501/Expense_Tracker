@@ -64,8 +64,8 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <TxProvider>
-          <BudgetProvider>
+        <BudgetProvider>
+          <TxProvider>
             <GroupProvider>
 
               {/* THEME TOGGLE */}
@@ -93,8 +93,8 @@ export default function App() {
               <AppRoutes />
 
             </GroupProvider>
-          </BudgetProvider>
-        </TxProvider>
+          </TxProvider>
+        </BudgetProvider>
       </AuthProvider>
     </BrowserRouter>
   )

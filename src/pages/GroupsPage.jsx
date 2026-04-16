@@ -27,9 +27,10 @@ export default function GroupsPage() {
     setMembers(prev => prev.filter(m => m !== name))
   }
 
-  function handleCreate() {
+  async function handleCreate() {
     if (!groupName.trim() || members.length < 2) return
-    const id = createGroup(groupName.trim(), emoji, members)
+    const id = await createGroup(groupName.trim(), emoji, members)
+    if (!id) return
 
     setShowCreate(false)
     setGroupName('')
@@ -171,6 +172,94 @@ export default function GroupsPage() {
               }}
             />
 
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 8 }}>
+                Choose an emoji
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {GROUP_EMOJIS.map(e => (
+                  <button
+                    key={e}
+                    type="button"
+                    onClick={() => setEmoji(e)}
+                    style={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 12,
+                      border: emoji === e ? '2px solid var(--teal)' : '1px solid var(--border)',
+                      background: 'var(--surface)',
+                      cursor: 'pointer',
+                      fontSize: 18,
+                    }}
+                  >
+                    {e}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text2)', marginBottom: 8 }}>
+                Add members
+              </div>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+                <input
+                  value={memberInput}
+                  onChange={e => setMemberInput(e.target.value)}
+                  placeholder="Member name"
+                  style={{
+                    flex: 1,
+                    padding: '10px 14px',
+                    borderRadius: 10,
+                    fontSize: 14,
+                    border: '1.5px solid var(--border)',
+                    outline: 'none',
+                    background: 'var(--surface)',
+                    color: 'var(--text)',
+                  }}
+                  onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addMember() } }}
+                />
+                <button
+                  type="button"
+                  onClick={addMember}
+                  style={{
+                    padding: '10px 16px',
+                    borderRadius: 12,
+                    border: 'none',
+                    background: memberInput.trim() ? 'var(--teal)' : '#ccc',
+                    color: '#fff',
+                    cursor: memberInput.trim() ? 'pointer' : 'not-allowed',
+                    fontSize: 13,
+                    fontWeight: 600,
+                  }}
+                >Add</button>
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                {members.map(name => (
+                  <button
+                    key={name}
+                    type="button"
+                    onClick={() => removeMember(name)}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 6,
+                      padding: '8px 10px',
+                      borderRadius: 999,
+                      border: '1px solid var(--border)',
+                      background: 'var(--surface)',
+                      color: 'var(--text)',
+                      cursor: name === 'You' ? 'default' : 'pointer',
+                      opacity: name === 'You' ? 0.6 : 1,
+                    }}
+                  >
+                    {name}
+                    {name !== 'You' && <span style={{ fontSize: 12 }}>✕</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div style={{ display: 'flex', gap: 8 }}>
               <button
                 onClick={handleCancel}
@@ -200,7 +289,7 @@ export default function GroupsPage() {
                   background: groupName.trim() && members.length >= 2 ? 'var(--teal)' : '#ccc',
                   fontSize: 13,
                   fontWeight: 600,
-                  cursor: 'pointer',
+                  cursor: groupName.trim() && members.length >= 2 ? 'pointer' : 'not-allowed',
                   color: '#fff',
                 }}
               >

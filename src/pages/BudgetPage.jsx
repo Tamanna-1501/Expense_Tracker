@@ -252,13 +252,13 @@ export default function BudgetPage() {
               {new Date().toLocaleString('en-IN', { month: 'long', year: 'numeric' })}
             </div>
           </div>
-          {availableCats.length > 0 && (
-            <button onClick={() => setShowAdd(s => !s)} style={{
-              background: '#1D9E75', border: 'none', cursor: 'pointer',
-              color: '#fff', borderRadius: 10, padding: '6px 14px',
-              fontSize: 13, fontWeight: 600,
-            }}>+ Add</button>
-          )}
+          <button onClick={() => setShowAdd(s => !s)} style={{
+            background: '#1D9E75', border: 'none', cursor: 'pointer',
+            color: '#fff', borderRadius: 10, padding: '6px 14px',
+            fontSize: 13, fontWeight: 600,
+            opacity: availableCats.length > 0 ? 1 : 0.5,
+            pointerEvents: availableCats.length > 0 ? 'auto' : 'none',
+          }}>+ Add</button>
         </div>
 
         {/* ── 🧪 TEST BUTTONS — delete after demo ── */}
@@ -282,7 +282,7 @@ export default function BudgetPage() {
         </div>
 
         {/* ── Category picker ── */}
-        {showAdd && (
+        {showAdd && availableCats.length > 0 && (
           <div style={{ margin: '12px 16px 0', background: 'var(--surface,#fff)', borderRadius: 16, padding: '14px 16px', border: '1px solid var(--border,#e5e7eb)' }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink1,#111)', marginBottom: 10 }}>Pick a category to budget:</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
@@ -297,6 +297,80 @@ export default function BudgetPage() {
                   <span style={{ fontSize: 15 }}>{CAT_ICONS[cat]}</span> {cat}
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+
+        {showAdd && availableCats.length === 0 && (
+          <div style={{ margin: '12px 16px 0', background: 'var(--surface,#fff)', borderRadius: 16, padding: '20px 16px', border: '1px solid var(--border,#e5e7eb)', textAlign: 'center', color: 'var(--ink3,#999)' }}>
+            <div style={{ fontSize: 13 }}>All categories already have budgets set! 🎉</div>
+          </div>
+        )}
+
+        {/* ── New budget input form (when adding new category) ── */}
+        {editingCat && !budgets[editingCat] && (
+          <div style={{ margin: '12px 16px 0', background: 'var(--surface,#fff)', borderRadius: 16, padding: '14px 16px', border: '2px solid #1D9E75' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+              <span style={{ fontSize: 20 }}>{CAT_ICONS[editingCat] || '📦'}</span>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--ink1,#111)' }}>Set budget for {editingCat}</div>
+                <div style={{ fontSize: 12, color: 'var(--ink3,#999)' }}>Enter monthly limit in ₹</div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                type="text"
+                value={inputVal}
+                onChange={e => setInputVal(e.target.value)}
+                placeholder="E.g., 5000"
+                autoFocus
+                style={{ 
+                  flex: 1, 
+                  padding: '12px 14px', 
+                  borderRadius: 10, 
+                  border: '2px solid #1D9E75', 
+                  fontSize: 14, 
+                  outline: 'none', 
+                  background: '#fff',
+                  color: '#111',
+                  cursor: 'text'
+                }}
+                onKeyDown={e => { 
+                  if (e.key === 'Enter') {
+                    saveEdit(editingCat) 
+                  }
+                }}
+              />
+              <button 
+                onClick={() => saveEdit(editingCat)} 
+                style={{ 
+                  background: '#1D9E75', 
+                  color: '#fff', 
+                  border: 'none', 
+                  borderRadius: 10, 
+                  padding: '12px 24px', 
+                  fontSize: 13, 
+                  fontWeight: 600, 
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap'
+                }}
+              >Set</button>
+              <button 
+                onClick={() => {
+                  setEditingCat(null)
+                  setInputVal('')
+                }} 
+                style={{ 
+                  background: 'none', 
+                  border: '1px solid var(--border,#e5e7eb)', 
+                  borderRadius: 10, 
+                  padding: '12px 16px', 
+                  fontSize: 13, 
+                  cursor: 'pointer', 
+                  color: 'var(--ink2,#555)',
+                  whiteSpace: 'nowrap'
+                }}
+              >Cancel</button>
             </div>
           </div>
         )}
@@ -365,17 +439,54 @@ export default function BudgetPage() {
                 </div>
               </div>
 
-              {isEditing && (
+              {isEditing && editingCat === cat && (
                 <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
                   <input
-                    type="number" value={inputVal}
+                    type="text"
+                    value={inputVal}
                     onChange={e => setInputVal(e.target.value)}
-                    placeholder="Enter budget amount" autoFocus
-                    style={{ flex: 1, padding: '8px 12px', borderRadius: 10, border: '1.5px solid #1D9E75', fontSize: 14, outline: 'none', background: 'var(--bg,#f5f5f5)', color: 'var(--ink1,#111)' }}
+                    placeholder="Enter amount"
+                    autoFocus
+                    style={{ 
+                      flex: 1, 
+                      padding: '10px 12px', 
+                      borderRadius: 10, 
+                      border: '2px solid #1D9E75', 
+                      fontSize: 14, 
+                      outline: 'none', 
+                      background: '#fff',
+                      color: '#111',
+                      cursor: 'text'
+                    }}
                     onKeyDown={e => { if (e.key === 'Enter') saveEdit(cat) }}
                   />
-                  <button onClick={() => saveEdit(cat)} style={{ background: '#1D9E75', color: '#fff', border: 'none', borderRadius: 10, padding: '8px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>Save</button>
-                  <button onClick={() => setEditingCat(null)} style={{ background: 'none', border: '1px solid var(--border,#e5e7eb)', borderRadius: 10, padding: '8px 12px', fontSize: 13, cursor: 'pointer', color: 'var(--ink2,#555)' }}>Cancel</button>
+                  <button 
+                    onClick={() => saveEdit(cat)} 
+                    style={{ 
+                      background: '#1D9E75', 
+                      color: '#fff', 
+                      border: 'none', 
+                      borderRadius: 10, 
+                      padding: '10px 16px', 
+                      fontSize: 13, 
+                      fontWeight: 600, 
+                      cursor: 'pointer',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >Save</button>
+                  <button 
+                    onClick={() => setEditingCat(null)} 
+                    style={{ 
+                      background: 'none', 
+                      border: '1px solid var(--border,#e5e7eb)', 
+                      borderRadius: 10, 
+                      padding: '10px 12px', 
+                      fontSize: 13, 
+                      cursor: 'pointer', 
+                      color: 'var(--ink2,#555)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >Cancel</button>
                 </div>
               )}
 

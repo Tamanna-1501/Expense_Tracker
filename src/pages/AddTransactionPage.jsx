@@ -22,12 +22,12 @@ export default function AddTransactionPage() {
     setForm(f => ({ ...f, cat: t === 'expense' ? 'Food' : 'Salary' }))
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault()
     if (!form.desc.trim()) { setError('Please enter a description.'); return }
     if (!form.amount || isNaN(+form.amount) || +form.amount <= 0) { setError('Please enter a valid amount.'); return }
     if (!form.date) { setError('Please select a date.'); return }
-    addTransaction({ ...form, type, amount: +form.amount })
+    await addTransaction({ ...form, type, amount: +form.amount })
     setSuccess(true)
     setTimeout(() => {
       setSuccess(false)

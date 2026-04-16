@@ -5,6 +5,7 @@ const NAV_ITEMS = [
   { to: '/groups', label: 'Groups', icon: () => <span>👥</span> },
   { to: '/transactions', label: 'Txns', icon: () => <span>💳</span> },
   { to: '/analytics', label: 'Analytics', icon: () => <span>📊</span> },
+  { to: '/budget', label: 'Budget', icon: () => <span>💰</span> },
   { to: '/add', label: 'Add', icon: () => <span>➕</span> },
   { to: '/chatbot', label: 'FinBot', icon: () => <span>🤖</span> },
   { to: '/settings', label: 'Settings', icon: () => <span>⚙️</span> }

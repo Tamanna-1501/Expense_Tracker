@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { useTx } from '../context/TxContext'
+import { useBudget } from '../context/BudgetContext'
 import BottomNav from '../components/BottomNav'
 import { fmt, fmtDate, CAT_ICONS, CAT_COLORS } from '../constants'
 import styles from './HomePage.module.css'
@@ -10,6 +11,7 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 export default function HomePage() {
   const { user } = useAuth()
   const { transactions, totalIncome, totalExpense, balance, categoryTotals, monthlyData } = useTx()
+  const { budgets } = useBudget()
   const navigate = useNavigate()
 
   const recent = [...transactions].sort((a,b) => b.date.localeCompare(a.date)).slice(0, 4)
@@ -26,8 +28,14 @@ export default function HomePage() {
 
   const monthLabel = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })
 
-  const budgetLimit = 15000
-  const budgetPct = Math.min(100, Math.round((totalExpense / budgetLimit) * 100))
+  // Calculate actual budget totals
+  const totalBudget = Object.values(budgets).reduce((s, v) => s + v, 0)
+  const currentMonth = now.toISOString().slice(0, 7)
+  const monthlyExpenses = transactions
+    .filter(t => t.type === 'expense' && t.date.startsWith(currentMonth))
+    .reduce((sum, t) => sum + t.amount, 0)
+  
+  const budgetPct = totalBudget > 0 ? Math.min(100, Math.round((monthlyExpenses / totalBudget) * 100)) : 0
   const savingsRate = totalIncome ? ((1 - totalExpense / totalIncome) * 100).toFixed(1) : '0.0'
 
   return (
@@ -120,7 +128,7 @@ export default function HomePage() {
                 Spent {fmt(totalExpense)}
               </span>
               <span style={{ color: 'var(--ink3)' }}>
-                Budget {fmt(budgetLimit)}
+                Budget {fmt(totalBudget)}
               </span>
             </div>
           </div>
