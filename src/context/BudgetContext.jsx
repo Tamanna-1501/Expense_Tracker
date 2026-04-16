@@ -1,16 +1,17 @@
 import { createContext, useContext, useState, useEffect } from 'react'
+import { useAuth } from './AuthContext'
 
 const BudgetContext = createContext()
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
 
 function currentMonth() {
   return new Date().toISOString().slice(0, 7)
 }
 
 export function BudgetProvider({ children }) {
-  const [budgets, setBudgets] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('budgets') || '{}') }
-    catch { return {} }
-  })
+  const { user, token } = useAuth()
+  const [budgets, setBudgets] = useState({})
+  const [loading, setLoading] = useState(false)
 
   const [firedAlerts, setFiredAlerts] = useState(() => {
     try { return JSON.parse(localStorage.getItem('budgetAlerts') || '{}') }
@@ -18,25 +19,112 @@ export function BudgetProvider({ children }) {
   })
 
   const [toasts, setToasts]       = useState([])
-  const [emailModal, setEmailModal] = useState(null) 
+  const [emailModal, setEmailModal] = useState(null)
+
+  // Load budgets from backend
   useEffect(() => {
-    localStorage.setItem('budgets', JSON.stringify(budgets))
-  }, [budgets])
+    if (!user || !token) {
+      setBudgets({})
+      return
+    }
+    
+    const loadBudgets = async () => {
+      try {
+        setLoading(true)
+        const res = await fetch(`${API_URL}/budgets`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+        if (res.ok) {
+          const data = await res.json()
+          const budgetMap = {}
+          const month = currentMonth()
+          data.budgets.forEach(b => {
+            if (b.month === month) {
+              budgetMap[b.category] = b.limit
+            }
+          })
+          setBudgets(budgetMap)
+        }
+      } catch (err) {
+        console.error('Error loading budgets:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    loadBudgets()
+  }, [user, token])
 
   useEffect(() => {
     localStorage.setItem('budgetAlerts', JSON.stringify(firedAlerts))
   }, [firedAlerts])
 
-  function setBudget(cat, amount) {
-    setBudgets(prev => ({ ...prev, [cat]: Number(amount) }))
+  async function setBudget(cat, amount) {
+    if (!token) {
+      console.error('No token available')
+      return
+    }
+    
+    try {
+      const month = currentMonth()
+      console.log('Setting budget:', { cat, amount, month, token: token.substring(0, 20) + '...' })
+      
+      const res = await fetch(`${API_URL}/budgets`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ category: cat, limit: Number(amount), month })
+      })
+      
+      console.log('Budget API response:', res.status, res.statusText)
+      
+      if (res.ok) {
+        const data = await res.json()
+        console.log('Budget saved successfully:', data)
+        setBudgets(prev => ({ ...prev, [cat]: Number(amount) }))
+      } else {
+        const data = await res.json()
+        console.error('Budget save failed:', data)
+      }
+    } catch (err) {
+      console.error('Error saving budget:', err)
+    }
   }
 
-  function removeBudget(cat) {
-    setBudgets(prev => {
-      const next = { ...prev }
-      delete next[cat]
-      return next
-    })
+  async function removeBudget(cat) {
+    if (!token) return
+    
+    try {
+      // First, find the budget ID to delete
+      const month = currentMonth()
+      const res = await fetch(`${API_URL}/budgets`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+      
+      if (res.ok) {
+        const data = await res.json()
+        const budgetToDelete = data.budgets.find(b => b.category === cat && b.month === month)
+        
+        if (budgetToDelete) {
+          // Delete from backend
+          await fetch(`${API_URL}/budgets/${budgetToDelete._id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          })
+        }
+      }
+      
+      // Update local state
+      setBudgets(prev => {
+        const next = { ...prev }
+        delete next[cat]
+        return next
+      })
+    } catch (err) {
+      console.error('Error removing budget:', err)
+    }
   }
 
   
@@ -129,7 +217,7 @@ export function BudgetProvider({ children }) {
 
   return (
     <BudgetContext.Provider value={{
-      budgets, setBudget, removeBudget,
+      budgets, setBudget, removeBudget, loading,
       checkAlerts, toasts, removeToast,
       emailModal, setEmailModal,
     }}>

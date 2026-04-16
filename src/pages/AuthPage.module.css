@@ -1,6 +1,7 @@
 .outer {
   display: flex;
   min-height: 100vh;
+  background: var(--bg);
 }
 
 .panel {
@@ -10,39 +11,50 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
+  background: var(--bg);
 }
 
 .art {
   flex: 1;
-  background: var(--ink);
+  background: var(--surface);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   gap: 2rem;
   padding: 3rem;
+  border-left: 1px solid var(--border);
 }
 
 @media (max-width: 700px) {
   .outer { flex-direction: column; }
-  .art   { display: none; }
-  .panel { max-width: 100%; padding: 2rem 1.5rem 3rem; justify-content: flex-start; padding-top: 3rem; }
+  .art { display: none; }
+  .panel {
+    max-width: 100%;
+    padding: 2rem 1.5rem 3rem;
+    justify-content: flex-start;
+    padding-top: 3rem;
+  }
 }
 
+/* LOGO */
 .logo {
   font-family: var(--font-display);
   font-size: 22px;
-  color: var(--ink);
+  color: var(--ink1);
   margin-bottom: 2rem;
 }
 
-.logo span { color: var(--teal); }
+.logo span {
+  color: var(--teal);
+}
 
+/* HEADINGS */
 .heading {
   font-family: var(--font-display);
   font-size: 32px;
   font-weight: 400;
-  color: var(--ink);
+  color: var(--ink1);
   margin-bottom: 6px;
   letter-spacing: -0.5px;
 }
@@ -53,7 +65,11 @@
   margin-bottom: 2rem;
 }
 
-.form { display: flex; flex-direction: column; }
+/* FORM */
+.form {
+  display: flex;
+  flex-direction: column;
+}
 
 .submitBtn {
   margin-top: 6px;
@@ -61,35 +77,46 @@
   font-size: 15px;
 }
 
-.submitBtn:disabled { opacity: 0.6; cursor: not-allowed; }
+.submitBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
 
+/* SPINNER */
 .spinner {
   display: inline-block;
-  width: 18px; height: 18px;
-  border: 2px solid rgba(255,255,255,0.3);
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(255,255,255,0.25);
   border-top-color: #fff;
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
 
-@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
 
+/* DEMO BUTTON */
 .demoBtn {
   margin-top: 12px;
   width: 100%;
   height: 46px;
-  border: 0.5px solid var(--border2);
+  border: 1px solid var(--border);
   border-radius: var(--r2);
-  background: var(--surface2);
+  background: var(--surface);
   color: var(--ink2);
   font-family: var(--font-body);
   font-size: 14px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: 0.15s;
 }
 
-.demoBtn:hover { background: var(--surface3); }
+.demoBtn:hover {
+  background: var(--surface2);
+}
 
+/* SWITCH TEXT */
 .switch {
   margin-top: 1.5rem;
   font-size: 13px;
@@ -103,31 +130,54 @@
   font-weight: 500;
 }
 
-/* Art panel */
+/* ART PANEL (DARK SAFE CARD) */
 .artCard {
-  background: rgba(255,255,255,0.07);
-  border: 0.5px solid rgba(255,255,255,0.12);
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: var(--r3);
   padding: 2rem;
   width: 280px;
+  color: var(--ink1);
 }
 
 .artBal {
   font-family: var(--font-display);
   font-size: 36px;
   font-weight: 400;
-  color: #fff;
+  color: var(--ink1);
   margin-bottom: 4px;
 }
 
-.artLabel { font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 1.5rem; }
+.artLabel {
+  font-size: 12px;
+  color: var(--ink3);
+  margin-bottom: 1.5rem;
+}
 
-.artStats { display: flex; gap: 2rem; }
+.artStats {
+  display: flex;
+  gap: 2rem;
+}
 
-.artUp   { font-size: 16px; font-weight: 500; color: #5DCAA5; }
-.artDown { font-size: 16px; font-weight: 500; color: #F0997B; }
-.artStat { font-size: 11px; color: rgba(255,255,255,0.35); margin-top: 3px; }
+.artUp {
+  font-size: 16px;
+  font-weight: 500;
+  color: #5DCAA5;
+}
 
+.artDown {
+  font-size: 16px;
+  font-weight: 500;
+  color: #F0997B;
+}
+
+.artStat {
+  font-size: 11px;
+  color: var(--ink3);
+  margin-top: 3px;
+}
+
+/* TAGLINE */
 .artTagline {
   text-align: center;
 }
@@ -136,6 +186,6 @@
   font-family: var(--font-display);
   font-size: 28px;
   font-weight: 400;
-  color: rgba(255,255,255,0.85);
+  color: var(--ink2);
   line-height: 1.3;
 }
